@@ -26,7 +26,7 @@ graph TD
   F --> |Iteratively update plan| F1[Incorporate new insights]
   G --> |Generate and update notebook| G1[Enable interactive exploration]
   H --> |Log results| H1[Save outputs to designated directory]
-
+'''
 
 ## Key Features
 
