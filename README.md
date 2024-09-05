@@ -2,7 +2,7 @@
 
 ### Overview
 
-This project, **Automated Data Scientist**, is an intelligent, adaptive data analysis solution designed to streamline and automate the data science workflow. Leveraging advanced language models and external APIs, it dynamically plans, executes, and refines data analyses, making it ideal for environments where rapid, data-driven decision-making is crucial.
+The **Automated Data Scientist** is an intelligent, adaptive data analysis solution designed to streamline and automate the data science workflow. Leveraging advanced language models and external APIs, it dynamically plans, executes, and refines data analyses, making it ideal for environments where rapid, data-driven decision-making is crucial.
 
 The application automatically handles everything from data preparation and initial analysis planning to code generation, execution, and result interpretation. By integrating AI-driven capabilities, it can adaptively update its analysis plan based on intermediate results, ensuring that the most relevant and insightful analyses are performed on the data.
 
