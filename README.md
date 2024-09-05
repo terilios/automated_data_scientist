@@ -163,7 +163,3 @@ This project uses [Semantic Versioning](https://semver.org/). Check the [Changel
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-
----
-
-This updated `README.md` now includes enhanced visual aids, more detailed setup instructions, usage examples, and improved clarity on the project's features and benefits. It also provides a more comprehensive overview of contributing, troubleshooting, and future enhancements.
