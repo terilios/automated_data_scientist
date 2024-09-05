@@ -7,25 +7,48 @@ The **Automated Data Scientist** is an intelligent, adaptive data analysis solut
 This application automatically handles everything from data preparation and initial analysis planning to code generation, execution, and result interpretation. By integrating AI-driven capabilities, it can adaptively update its analysis plan based on intermediate results, ensuring that the most relevant and insightful analyses are performed on the data.
 
 ```mermaid
-graph TD
-  A[Environment Setup] --> B[Data Initialization]
-  B --> C[Initial Analysis Planning]
-  C --> D[Analysis Execution]
-  D --> E[Result Interpretation]
-  E --> F[Adaptive Planning]
-  F --> C
-  E --> G[Jupyter Notebook Integration]
-  G --> H[Completion and Logging]
+flowchart TD
+    A[Environment Setup] --> B[Data Initialization]
+    B --> C[Initial Analysis Planning]
+    C --> D[Analysis Execution]
+    D --> E[Result Interpretation]
+    E --> F[Adaptive Planning]
+    F --> C
+    E --> G[Jupyter Notebook Integration]
+    G --> H[Completion and Logging]
 
-  %% Descriptions
-  A --> |Load environment variables| A1[Configure logging]
-  B --> |Load data dictionary| B1[Load sample of production data]
-  C --> |Generate initial analysis plan| C1[Use external API (OpenAI GPT or Anthropic GPT)]
-  D --> |Create Python code for each step| D1[Execute code with CodeExecutor]
-  E --> |Review results| E1[Provide context-aware insights]
-  F --> |Iteratively update plan| F1[Incorporate new insights]
-  G --> |Generate and update notebook| G1[Enable interactive exploration]
-  H --> |Log results| H1[Save outputs to designated directory]
+    subgraph Setup
+    A
+    end
+
+    subgraph Initialization
+    B
+    end
+
+    subgraph Planning
+    C
+    end
+
+    subgraph Execution
+    D
+    end
+
+    subgraph Interpretation
+    E
+    end
+
+    subgraph Adaptive_Planning
+    F
+    end
+
+    subgraph Notebook
+    G
+    end
+
+    subgraph Completion
+    H
+    end
+
 '''
 
 ## Key Features
