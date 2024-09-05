@@ -8,48 +8,55 @@ This application automatically handles everything from data preparation and init
 
 ```mermaid
 flowchart TD
-    A[Environment Setup] --> B[Data Initialization]
-    B --> C[Initial Analysis Planning]
-    C --> D[Analysis Execution]
-    D --> E[Result Interpretation]
-    E --> F[Adaptive Planning]
+    %% Define subgraphs
+    subgraph A[Environment Setup]
+        A1[Load environment variables]
+        A2[Configure logging]
+    end
+
+    subgraph B[Data Initialization]
+        B1[Load data dictionary]
+        B2[Load sample production data]
+    end
+
+    subgraph C[Initial Analysis Planning]
+        C1[Generate initial analysis plan]
+    end
+
+    subgraph D[Analysis Execution]
+        D1[Create Python code for each step]
+        D2[Execute code]
+    end
+
+    subgraph E[Result Interpretation]
+        E1[Review results]
+        E2[Provide insights]
+    end
+
+    subgraph F[Adaptive Planning]
+        F1[Update analysis plan iteratively]
+    end
+
+    subgraph G[Jupyter Notebook Integration]
+        G1[Generate and update Jupyter Notebook]
+    end
+
+    subgraph H[Completion and Logging]
+        H1[Log results]
+        H2[Save outputs to directory]
+    end
+
+    %% Define connections
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
     F --> C
-    E --> G[Jupyter Notebook Integration]
-    G --> H[Completion and Logging]
+    E --> G
+    G --> H
 
-    subgraph Setup
-    A
-    end
-
-    subgraph Initialization
-    B
-    end
-
-    subgraph Planning
-    C
-    end
-
-    subgraph Execution
-    D
-    end
-
-    subgraph Interpretation
-    E
-    end
-
-    subgraph Adaptive_Planning
-    F
-    end
-
-    subgraph Notebook
-    G
-    end
-
-    subgraph Completion
-    H
-    end
-
-'''
+```
 
 ## Key Features
 
