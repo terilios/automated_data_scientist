@@ -94,17 +94,5 @@ LOGGING_CONFIG = {
 
 # List of allowed libraries for dynamic import in code execution
 ALLOWED_LIBRARIES = [
-    'pandas', 'numpy', 'matplotlib', 'seaborn', 'scipy', 'sklearn', 
-    'statsmodels', 'plotly', 'altair', 'bokeh', 
-    'dask', 'pyjanitor', 
-    'xgboost', 'lightgbm', 'catboost', 'tensorflow', 'keras', 'pytorch', 
-    'holoviews', 'geopandas', 'folium', 'dash', 
-    'nltk', 'spacy', 'transformers', 
-    'pyarrow', 'openpyxl', 'xlrd', 
-    'pydantic', 'great_expectations', 
-    'tsfresh', 'prophet', 
-    'networkx', 
-    'cvxpy', 'sympy', 
-    'joblib', 'numba', 
-    'h5py', 'zarr'
+    'pandas', 'numpy', 'matplotlib', 'seaborn', 'scipy', 'sklearn', 'statsmodels', 'plotly', 'altair', 'bokeh', 'dask', 'pyjanitor', 'xgboost', 'lightgbm', 'catboost', 'tensorflow', 'keras', 'pytorch', 'holoviews', 'geopandas', 'folium', 'dash', 'nltk', 'spacy', 'transformers', 'pyarrow', 'openpyxl', 'xlrd', 'pydantic', 'great_expectations', 'tsfresh', 'prophet', 'networkx', 'cvxpy', 'sympy', 'joblib', 'numba', 'h5py', 'zarr'
 ]

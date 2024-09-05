@@ -11,7 +11,7 @@ class AnalysisPlanner:
 
     def generate_initial_plan(self, data_dict: Dict, data_sample: Any) -> List[Dict]:
         """
-        Generates an initial analysis plan based on the data dictionary and production data sample.
+        Generates a comprehensive analysis plan including at least 15 analyses based on the data dictionary and production data sample.
         
         Args:
         data_dict (Dict): The data dictionary describing the dataset.
@@ -34,7 +34,7 @@ class AnalysisPlanner:
         - Column names: {', '.join(data_sample.columns)}
         - Data types: {self.serialize_object(data_sample.dtypes.to_dict())}
 
-        Please generate an initial analysis plan with 15-20 steps. For each step, provide:
+        Please generate a comprehensive analysis plan with a minimum of 15 analyses steps. For each step, provide:
         1. A name for the analysis
         2. A brief description of what the analysis will do
         3. The expected insights this analysis might provide

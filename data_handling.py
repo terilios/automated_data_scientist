@@ -10,6 +10,7 @@ class DataHandler:
         self.data_dict_path = data_dict_path
         self.production_csv_path = production_csv_path
         self.data_dict = {}
+        self.data_dict_content = ""
         self.production_data_sample = None
 
     def initialize_data(self):
@@ -20,6 +21,7 @@ class DataHandler:
     def read_data_dictionary(self) -> Dict:
         """
         Reads the data dictionary from the specified Markdown file and stores it in the data_dict attribute.
+        Also stores the full content of the markdown file in the data_dict_content attribute.
         
         Returns:
         Dict: A dictionary containing the parsed data dictionary.
@@ -31,11 +33,11 @@ class DataHandler:
         logging.info(f"Reading data dictionary from {self.data_dict_path}")
         try:
             with open(self.data_dict_path, 'r') as file:
-                md_content = file.read()
+                self.data_dict_content = file.read()
             
             # Parse the Markdown table content
             table_pattern = r'\|(.+?)\|(.+?)\|(.+?)\|'
-            for match in re.finditer(table_pattern, md_content, re.MULTILINE):
+            for match in re.finditer(table_pattern, self.data_dict_content, re.MULTILINE):
                 column_name = match.group(1).strip()
                 data_type = match.group(2).strip()
                 description = match.group(3).strip()
