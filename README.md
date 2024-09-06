@@ -84,7 +84,7 @@ flowchart TD
 Download the project to your local environment:
 
 ```bash
-git clone https://github.com/yourusername/automated-data-scientist.git
+git clone https://github.com/terilios/automated-data-scientist.git
 cd automated-data-scientist
 ```
 
