@@ -81,7 +81,7 @@ class AnalysisPlanner:
             ]
         }}
         
-        Given the following data dictionary and initial analysis plan, please provide an enhanced and more comprehensive analysis plan. Consider the relationships between variables, potential advanced analyses, and any insights that could be derived from the data structure.
+        Given the following data dictionary and initial analysis plan, please reflect on ways we can improve this plan and include enhanced and more comprehensive and complex analysis. Consider the relationships between variables, potential advanced analyses, and any insights that could be derived from the data structure.
 
         Data Dictionary:
         {data_dict_content}

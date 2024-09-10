@@ -124,7 +124,7 @@ class APIClient:
         str: The preprocessed response.
         """
         # Replace smart quotes with straight quotes
-        processed_response = response.replace('"', '"').replace('"', '"')
+        processed_response = response.replace('“', '"').replace('”', '"')
         
         # Log the preprocessing step
         logging.info("Preprocessed API response to handle smart quotes")
@@ -152,7 +152,7 @@ class APIClient:
             # Fallback to the previous method for non-structured responses
             try:
                 # Strip the markdown code block delimiters
-                json_str = response.strip("```json\n").strip("\n```")
+                json_str = response.strip("```json").strip("\n```")
                 return json.loads(json_str)
             except json.JSONDecodeError as e:
                 logging.error(f"Failed to parse API response as JSON. Error: {str(e)}")

@@ -1,16 +1,42 @@
 import logging
 import base64
-import gzip
+import os
 import pandas as pd
+import numpy as np
 from typing import Dict, Any, List
 from api_client import APIClient
 import json
 import traceback
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, pd.Series):
+            return obj.to_list()
+        elif isinstance(obj, pd.core.dtypes.base.ExtensionDtype):
+            return str(obj)
+        elif pd.api.types.is_categorical_dtype(obj):
+            return str(obj)
+        elif isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        elif isinstance(obj, pd.Timedelta):
+            return obj.total_seconds()
+        return super(NumpyEncoder, self).default(obj)
 
 class ResultInterpreter:
     def __init__(self, api_client: APIClient):
         self.api_client = api_client
+        self.api_key = os.getenv("OPENAI_API_KEY")
         logging.basicConfig(level=logging.INFO,
                             format='%(asctime)s - %(levelname)s - %(message)s',
                             handlers=[
@@ -21,12 +47,11 @@ class ResultInterpreter:
     def encode_image(self, file_path: str) -> bytes:
         try:
             with open(file_path, "rb") as image_file:
-                encoded = base64.b64encode(image_file.read())
-                compressed = gzip.compress(encoded)
-                return compressed
+                encoded = base64.b64encode(image_file.read()).decode('utf-8')
+                return encoded
         except Exception as e:
             logging.error(f"Error encoding image {file_path}: {str(e)}")
-            return b""
+            return ""
 
     def read_data_dictionary(self) -> str:
         try:
@@ -53,45 +78,52 @@ class ResultInterpreter:
     def interpret_results(self, analysis: Dict[str, Any], result: Any, output: str, figure_paths: List[str], completed_analyses: List[Dict], key_findings: List[str]) -> str:
         logging.info(f"Interpreting results for analysis: {analysis['name']}")
 
+        if not figure_paths or len(figure_paths) == 0:
+            logging.error("No figure paths provided for image analysis.")
+            return "Error: No figure paths provided for image analysis."
+
         try:
-            data_dictionary_content = self.read_data_dictionary()
-            production_data_sample = self.read_production_data_sample()
-
-            important_figure_paths = figure_paths[:1]
-            encoded_images = [self.encode_image(path) for path in important_figure_paths] if important_figure_paths else []
-
+            # Contextual information
             analysis_summary = analysis.get("summary", "No summary available")[:1000]
-            key_points = "; ".join(key_findings[:5])
-
-            prompt = f"""
-            Analysis Summary (Top Points):
-            {analysis_summary}
             
-            Key Findings Detailed (Up to 5 insights): {key_points}
+            # Read data dictionary content
+            data_dictionary_content = self.read_data_dictionary()
 
-            Data Dictionary Overview: 
-            {data_dictionary_content}
+            # Encode the first image
+            base64_image = self.encode_image(figure_paths[0])
+            base64_prefixed_image = f"data:image/png;base64,{base64_image}"
 
-            Sample Data from Production Data:
-            {production_data_sample}
+            # Prepare messages payload
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an image analysis system. Analyze the following image and provide detailed insights. Consider the analysis summary and data dictionary for further context."
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": f"Analysis Summary: {analysis_summary}"},
+                        {"type": "text", "text": "Analyze this image."},
+                        {"type": "text", "text": f"Data Dictionary: {data_dictionary_content[:2000]}"},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": base64_prefixed_image
+                            }
+                        }
+                    ]
+                }
+            ]
 
-            Visuals: Compressed Base64
-
-            Provide nuanced interpretation focusing on insights and critical recommendations.
-            """
+            # Call API using self.api_client
+            response = self.api_client.chat.completions.create(
+                model="gpt-4o-2024-08-06",
+                messages=messages,
+                max_tokens=300
+            )
             
-            interpretation = self.api_client.call_api(prompt)
-
+            interpretation = response.choices[0].message.content
             logging.info("API Response: %s", interpretation)
-            print("API Response:", interpretation)
-
-            if "compressed" not in interpretation.lower():
-                logging.warning("The API response did not acknowledge compressed image data.")
-
-            if "recommendations" not in interpretation.lower():
-                logging.warning("The API response may lack specific recommendations on insights.")
-
-            logging.info(f"Results interpretation completed for analysis: {analysis['name']}")
             return interpretation
 
         except Exception as e:
@@ -127,10 +159,10 @@ class ResultInterpreter:
         Generate a comprehensive project report including the following:
 
         Completed Analyses:
-        {json.dumps(completed_analyses, indent=2)}
+        {json.dumps(completed_analyses, indent=2, cls=NumpyEncoder)}
 
         Key Findings:
-        {json.dumps(key_findings, indent=2)}
+        {json.dumps(key_findings, indent=2, cls=NumpyEncoder)}
 
         Report must include:
         1. Executive Summary
@@ -177,7 +209,7 @@ if __name__ == "__main__":
     }
     mock_result = "Test result"
     mock_output = "Test output"
-    mock_figure_paths = ["test_figure1.png", "test_figure2.png"]
+    mock_figure_paths = ["output/figures/event_date_distribution.png"]
     mock_completed_analyses = [mock_analysis]
     mock_key_findings = ["Finding 1", "Finding 2"]
 

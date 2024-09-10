@@ -58,23 +58,33 @@ class NotebookManager:
         logging.info(f"Added analysis step for: {name}")
 
     def save_notebook(self):
-        # Serialize the notebook content to JSON
-        notebook_json = nbformat.writes(self.notebook)
-        
-        # Log the entire notebook content
-        logging.debug("Serialized Notebook JSON content:\n%s", notebook_json)
-        
-        # Write the JSON content to a file
-        with open(self.notebook_path, 'w', encoding='utf-8') as f:
-            f.write(notebook_json)
-        
-        logging.info(f"Notebook saved to {self.notebook_path}")
+        try:
+            # Ensure notebook structure and validate
+            nbformat.validate(self.notebook)
+            
+            # Serialize the notebook content to JSON
+            notebook_json = nbformat.writes(self.notebook, version=4)
+
+            # Log the entire notebook content
+            logging.debug("Serialized Notebook JSON content:\n%s", notebook_json)
+
+            # Write the JSON content to a file
+            with open(self.notebook_path, 'w', encoding='utf-8') as f:
+                f.write(notebook_json)
+
+            logging.info(f"Notebook saved to {self.notebook_path}")
+
+        except nbformat.ValidationError as e:
+            logging.error(f"Validation error: {e.message}")
+        except Exception as e:
+            logging.error(f"Error saving notebook: {str(e)}")
 
     def get_notebook_json(self) -> Dict[str, Any]:
         return json.loads(nbformat.writes(self.notebook))
 
 if __name__ == "__main__":
     # This block is for testing purposes
+    logging.basicConfig(level=logging.DEBUG)
     nm = NotebookManager()
     nm.add_analysis_step("Test Analysis", "This is a test description", "These are test goals", "print('Hello, World!')")
     nm.save_notebook()

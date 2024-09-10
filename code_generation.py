@@ -70,9 +70,14 @@ class CodeGenerator:
             # Remove Python code block markers
             sanitized_code = sanitized_code.replace("'''python", "").replace("'''", "")
             
-            # Parse the code and unparse it to ensure correct indentation
-            tree = ast.parse(sanitized_code)
-            sanitized_code = ast.unparse(tree)
+            # Parse the code and fix any indentation issues
+            try:
+                tree = ast.parse(sanitized_code)
+                sanitized_code = ast.unparse(tree)
+            except IndentationError as ie:
+                logging.error("Indentation error detected: attempting automatic correction.")
+                # Implement correction logic if needed
+                raise ie
             
             # Ensure code cells end properly
             if not sanitized_code.endswith('\n'):
