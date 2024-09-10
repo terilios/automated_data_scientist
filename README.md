@@ -1,217 +1,149 @@
 # Automated Data Scientist
 
-## Overview
+### Overview
 
-The **Automated Data Scientist** is an intelligent, adaptive data analysis solution designed to streamline and automate the data science workflow. Leveraging advanced language models and external APIs, it dynamically plans, executes, and refines data analyses, making it ideal for environments where rapid, data-driven decision-making is crucial.
+The **Automated Data Scientist** is an advanced AI-driven solution designed to automate and optimize the entire data science workflow. By leveraging large language models and external APIs, it dynamically plans, executes, and refines data analyses, making it ideal for environments that demand rapid, data-driven decision-making.
 
-This application automatically handles everything from data preparation and initial analysis planning to code generation, execution, and result interpretation. By integrating AI-driven capabilities, it can adaptively update its analysis plan based on intermediate results, ensuring that the most relevant and insightful analyses are performed on the data.
+This application automates the data preparation, analysis planning, code generation, execution, and result interpretation processes, with the ability to adapt based on intermediate results. It ensures that the most relevant and insightful analyses are performed on the data, significantly reducing the manual effort required for complex data science tasks.
+
+### Key Features
+
+- **Automated Data Handling**: Efficiently loads, cleans, and preprocesses data using configurable settings defined in `config.py`. The `data_handling.py` module facilitates this process by managing data from multiple sources.
+- **Dynamic Analysis Planning**: Utilizes language models through API calls to generate an initial analysis plan based on data characteristics. This is achieved by the `analysis_planning.py` module, which communicates with external APIs.
+- **Code Generation**: The `code_generation.py` module generates Python code snippets dynamically for each analysis step. It transforms high-level analytical tasks into executable code using language model APIs.
+- **Execution Management**: The `execution.py` module executes generated scripts, captures outputs, and manages errors or exceptions. The process is tightly integrated with the `main.py` script, which orchestrates the entire workflow.
+- **Result Interpretation**: The `interpretation.py` module provides context-aware interpretations of analysis results, identifying patterns, anomalies, and key insights.
+- **Notebook Management**: The `notebook_manager.py` module integrates with Jupyter Notebook environments to facilitate interactive data analysis and visualization.
+- **Testing Framework**: Includes comprehensive testing scripts (`test_automated_data_scientist.py` and `test_notebook_manager.py`) to ensure reliability and correctness.
+- **Configuration Management**: The `config.py` file allows users to configure environment variables, API keys, and other settings for customized data analysis.
+- **Scalability and Adaptability**: Supports flexible limits on analysis steps and can handle varying data sizes, from small exploratory datasets to large-scale production data.
+
+### How It Works
+
+1. **Environment Setup**: The application initializes by loading environment variables, setting up logging, and preparing the environment through the `main.py` script.
+
+2. **Data Handling**:
+   - The `DataHandler` class in `data_handling.py` is responsible for loading and preparing the data. It supports different data formats and performs initial cleaning and preprocessing to ensure data is ready for analysis.
+
+3. **Initial Analysis Planning**: 
+   - The `AnalysisPlanner` in `analysis_planning.py` generates an initial plan using API calls to external language models. It sends prompts to an AI service (e.g., OpenAI GPT or Anthropic) to determine a sequence of analytical tasks, including EDA, hypothesis testing, and modeling based on the dataset's characteristics.
+
+4. **Code Generation**:
+   - The `CodeGenerator` in `code_generation.py` creates Python code dynamically for each analysis step. It uses API calls to convert high-level analytical tasks into executable Python scripts tailored to the data.
+
+5. **Execution of Analysis**:
+   - The `CodeExecutor` in `execution.py` runs the generated scripts, captures outputs (results, logs, and visualizations), and handles exceptions. It integrates closely with the `main.py` script to manage the entire execution workflow.
+
+6. **Interpretation of Results**:
+   - The `ResultInterpreter` in `interpretation.py` reviews the outputs of each analysis step, providing context-aware interpretations and insights that highlight patterns, anomalies, or other significant findings.
+
+7. **Notebook Management**:
+   - The `NotebookManager` in `notebook_manager.py` facilitates integration with Jupyter Notebooks, enabling users to interactively analyze data, visualize results, and refine their analyses.
+
+8. **Adaptive Planning and Execution**:
+   - After each analysis step, the application uses the `review_and_update_plan` method in `analysis_planning.py` to refine the analysis plan based on intermediate findings. This iterative process ensures that new insights or anomalies are explored further.
+
+9. **Testing and Validation**:
+   - The testing scripts (`test_automated_data_scientist.py` and `test_notebook_manager.py`) provide a comprehensive framework for validating the functionality of all modules, ensuring reliability and robustness.
+
+10. **Configurable Control**:
+    - Users can set a maximum number of analyses and configure various parameters in `config.py` to balance thoroughness and efficiency.
+
+11. **Completion and Logging**:
+    - Upon completing the analysis, all results, including logs and outputs, are stored in designated directories, providing a clear trail of all activities and findings.
+
+### Benefits
+
+- **Automation and Efficiency**: Minimizes manual intervention by automating data preparation, analysis planning, code generation, and execution.
+- **Flexibility and Adaptability**: Dynamically adjusts the analysis process in response to new findings, ensuring that the most relevant data insights are explored.
+- **Comprehensive Insights**: Provides in-depth, context-aware interpretations of results, enhancing decision-making speed and quality.
+- **Scalability**: Easily configurable to handle datasets of varying sizes and complexity.
 
 ```mermaid
 flowchart TD
-    %% Define subgraphs
-    subgraph A[Environment Setup]
-        A1[Load environment variables]
-        A2[Configure logging]
-    end
-
-    subgraph B[Data Initialization]
-        B1[Load data dictionary]
-        B2[Load sample production data]
-    end
-
-    subgraph C[Initial Analysis Planning]
-        C1[Generate initial analysis plan]
-    end
-
-    subgraph D[Analysis Execution]
-        D1[Create Python code for each step]
-        D2[Execute code]
-    end
-
-    subgraph E[Result Interpretation]
-        E1[Review results]
-        E2[Provide insights]
-    end
-
-    subgraph F[Adaptive Planning]
-        F1[Update analysis plan iteratively]
-    end
-
-    subgraph G[Jupyter Notebook Integration]
-        G1[Generate and update Jupyter Notebook]
-    end
-
-    subgraph H[Completion and Logging]
-        H1[Log results]
-        H2[Save outputs to directory]
-    end
-
-    %% Define connections
-    A --> B
-    B --> C
-    C --> D
-    D --> E
-    E --> F
-    F --> C
-    E --> G
-    G --> H
-
+    A[Initialize Application] --> B[Load Environment Variables and Configuration]
+    B --> C[Set up Logging and Environment]
+    C --> D[Load Data using DataHandler]
+    D --> E[Clean and Preprocess Data]
+    E --> F[Generate Initial Analysis Plan]
+    F --> G[API Calls to Language Models]
+    G --> H[Generate Python Code for Each Step]
+    H --> I[Use Language Model APIs for Code Generation]
+    I --> J[Execute Generated Code]
+    J --> K[Capture Outputs and Handle Exceptions]
+    K --> L[Interpret Analysis Results]
+    L --> M[Provide Context-Aware Insights]
+    J --> N[Integrate with Jupyter Notebook]
+    N --> O[Facilitate Interactive Analysis and Visualization]
+    M --> P[Review Outputs and Update Plan]
+    P --> Q[Iterate Based on New Findings]
+    Q --> F
+    P --> U[Store Results and Logs]
+    U --> V[Complete Analysis Workflow]
 ```
 
-## Key Features
+### Getting Started
 
-- **Automated Data Initialization**: Loads and prepares data using metadata from a data dictionary and a sample of the production data.
-- **Dynamic Analysis Planning**: Uses language models via API calls to create an initial analysis plan based on the characteristics of the dataset.
-- **Adaptive Analysis Execution**: Dynamically generates Python code for each analysis step, executes the code, and captures outputs, including results and visualizations.
-- **Iterative Refinement**: Reviews the outputs and iteratively updates the analysis plan to refine insights or explore additional data characteristics.
-- **Integrated Jupyter Notebook Support**: Automatically generates and updates a Jupyter Notebook during the analysis process for interactive exploration.
-- **Enhanced API Client Handling**: Supports multiple API types (`openai`, `anthropic`) with error handling and retry logic for resilient API interactions.
-- **Detailed Logging and Monitoring**: Configurable logging provides comprehensive insights into the execution process for debugging and monitoring.
-- **Configurable Limits**: Allows configurable control over the maximum number of analyses to be performed, ensuring the process remains efficient and manageable.
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/yourusername/automated-data-scientist.git
+   cd automated-data-scientist
+   ```
 
-## Benefits
+2. **Set Up a Virtual Environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
 
-- **Automation and Efficiency**: Reduces the need for manual intervention by automating repetitive tasks and adapting the analysis based on data characteristics.
-- **Flexibility and Adaptability**: Dynamically adjusts the analysis process to explore the most relevant data insights, responding to new findings in real time.
-- **Comprehensive Data Insights**: Provides in-depth, context-aware interpretations of results that are easy to understand, enabling faster decision-making.
-- **Scalability**: Easily configurable to handle different datasets, from small exploratory studies to large-scale production data, with customizable limits on the scope of analysis.
-- **Interactive Exploration**: The integration of Jupyter Notebook support enables users to interact with and refine the analysis process seamlessly.
+3. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Getting Started
+4. **Configure Environment Variables**:
+   Create a `.env` file in the project root with the following content:
+   ```bash
+   OPENAI_API_KEY=your_openai_api_key
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   PRODUCTION_CSV_PATH=/path/to/your/production_data.csv
+   DATA_DICT_PATH=/path/to/your/data_dictionary.md
+   ```
 
-### 1. Clone the Repository
+5. **Prepare Your Data**:
+   Place your production CSV data and data dictionary in the appropriate locations (or update the paths in the `.env` file).
 
-Download the project to your local environment:
+### Running the Automated Data Scientist
 
-```bash
-git clone https://github.com/terilios/automated-data-scientist.git
-cd automated-data-scientist
-```
-
-### 2. Set Up Environment Variables
-
-Create a `.env` file in the project root with your configuration details:
-
-```bash
-OPENAI_API_KEY=your_openai_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-PRODUCTION_CSV_PATH=/path/to/your/production_data.csv
-DATA_DICT_PATH=/path/to/your/data_dictionary.md
-```
-
-> **Note**: Ensure that your API keys are valid and have appropriate permissions. You can obtain these keys from [OpenAI](https://beta.openai.com/signup/) and [Anthropic](https://anthropic.com).
-
-### 3. Create and Activate a Virtual Environment
-
-Set up a Python virtual environment to manage dependencies:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-```
-
-### 4. Install Dependencies
-
-Install the required Python libraries:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 5. Run the Application
-
-Execute the main script to start the automated data science process:
+To run the automated data science process:
 
 ```bash
 python main.py
 ```
 
-### 6. Review Outputs
+Check the `output` directory for the generated report, visualizations, and other outputs.
 
-Check the `output` directory for the generated reports, visualizations, and the Jupyter Notebook.
+### Configuration
 
-## Configuration
+You can modify the behavior of the Automated Data Scientist by editing the `config.py` file. This includes settings for data handling, API usage, analysis limits, and output formatting.
 
-### Customizing the Analysis
+### Testing
 
-The behavior of the Automated Data Scientist can be customized by editing the `config.py` file:
-
-- **Data Handling**: Adjust parameters such as `MAX_SAMPLE_ROWS` to control the amount of data loaded for analysis.
-- **API Usage**: Set the `DEFAULT_API_TYPE`, `MAX_API_RETRIES`, and `API_RETRY_DELAY` for API interactions.
-- **Analysis Parameters**: Modify `MAX_ANALYSES` and `MIN_CONFIDENCE_THRESHOLD` to control the scope and depth of the analysis.
-- **Code Execution**: Configure `CODE_EXECUTION_TIMEOUT` to manage the execution time of code blocks.
-- **Logging**: Customize the `LOGGING_CONFIG` to suit your monitoring and debugging needs.
-
-### Example `.env` File
-
-Here’s a sample `.env` file for quick reference:
-
-```plaintext
-OPENAI_API_KEY=your_openai_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-PRODUCTION_CSV_PATH=/path/to/your/production_data.csv
-DATA_DICT_PATH=/path/to/your/data_dictionary.md
-```
-
-### Troubleshooting
-
-- **Virtual Environment Issues**: If you encounter problems with the virtual environment, ensure that you are using Python 3.7 or higher and have correctly activated the environment.
-- **API Authentication Errors**: Double-check that your API keys are correctly set in the `.env` file and that your network allows outbound connections to the API services.
-- **Missing Dependencies**: Run `pip install -r requirements.txt` again to ensure all dependencies are installed.
-
-## Usage Examples
-
-### Example 1: Running a Basic Analysis
-
-To run a standard analysis on a production dataset:
+Run the test scripts to validate the functionality of the project:
 
 ```bash
-python main.py
+python test_automated_data_scientist.py
+python test_notebook_manager.py
 ```
 
-### Example 2: Custom Analysis with Modified Settings
+### Contributing
 
-Adjust `config.py` to change the default API type and increase the number of analyses:
+If you'd like to contribute to this project, please fork the repository and submit a pull request. Ensure that your contributions align with the project’s objectives and adhere to coding standards.
 
-```python
-DEFAULT_API_TYPE = 'anthropic'
-MAX_ANALYSES = 15
-```
+### License
 
-Then, run the application again:
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-```bash
-python main.py
-```
+### Contact Information
 
-## Contributing
-
-We welcome contributions to enhance this project! To contribute:
-
-1. **Fork the repository** and clone it to your local machine.
-2. **Create a new branch** for your feature or bug fix.
-3. **Make your changes** and ensure they are well-documented.
-4. **Submit a pull request** with a clear description of your changes.
-
-Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) to create a welcoming environment for everyone.
-
-## Versioning and Updates
-
-This project uses [Semantic Versioning](https://semver.org/). Check the [Changelog](CHANGELOG.md) for details on updates and changes.
-
-### Future Enhancements
-
-- **Support for Complex Data Types**: Adding capabilities to handle time series, geospatial data, and more.
-- **Integration with Additional Tools**: Extending support to include more data science platforms and libraries.
-- **Domain-Specific Knowledge Models**: Enhancing interpretive capabilities by incorporating domain-specific models.
-
-## Additional Resources
-
-- [OpenAI API Documentation](https://beta.openai.com/docs/)
-- [Anthropic API Documentation](https://anthropic.com/docs)
-- [Python Virtual Environment Guide](https://docs.python.org/3/tutorial/venv.html)
-- [Data Science Best Practices](https://towardsdatascience.com/)
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+For any questions or further information, please contact Timothy Driscoll at tdriscoll@terilios.com.
