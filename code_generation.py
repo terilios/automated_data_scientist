@@ -3,28 +3,14 @@ from typing import Dict, Any, List
 from api_client import APIClient
 import config
 from config import ALLOWED_LIBRARIES
-import nbformat
-from nbformat.v4 import new_notebook, new_markdown_cell, new_code_cell
+import ast
+import traceback
 
 class CodeGenerator:
     def __init__(self, api_client: APIClient):
         self.api_client = api_client
-        self.notebook = new_notebook()
-        self.notebook_path = 'output/analysis_notebook.ipynb'
 
     def generate_code(self, analysis: Dict[str, Any], data_dict: Dict[str, Any], analysis_plan: List[Dict[str, Any]], data_dict_content: str) -> str:
-        """
-        Generates Python code for a given analysis step and adds it to the Jupyter Notebook.
-
-        Args:
-        analysis (Dict[str, Any]): The analysis step details.
-        data_dict (Dict[str, Any]): The data dictionary describing the dataset.
-        analysis_plan (List[Dict[str, Any]]): The complete analysis plan.
-        data_dict_content (str): The full content of the data dictionary markdown file.
-
-        Returns:
-        str: Generated Python code for the analysis.
-        """
         logging.info(f"Generating code for analysis: {analysis['name']}")
 
         prompt = f"""
@@ -53,32 +39,60 @@ class CodeGenerator:
         8. Ensure the code is efficient and follows best practices
         9. Use the following code to load the data:
            import pandas as pd
-           df = pd.read_csv('{config.PRODUCTION_CSV_PATH}')
+           df = pd.read_csv(config.PRODUCTION_CSV_PATH)
         10. Consider the complete analysis plan when generating code for this step
         11. You may only use the following libraries in your code:
             {', '.join(ALLOWED_LIBRARIES)}
+        12. Ensure plots are well-labeled, including titles, axis labels, and legends where appropriate.
+        13. Test for data readiness before plotting and consider showing plots inline if necessary for review.
 
-        Provide only the Python code, without any explanations or markdown formatting.
+        Return only the well formed Python code, without any explanations or markdown formatting.
         """
 
-        code = self.api_client.call_api(prompt)
-        logging.info(f"Code generated for analysis: {analysis['name']}")
-        
-        # Add the generated code to the Jupyter Notebook
-        self.add_to_notebook(analysis['name'], code)
-        
-        return code
+        try:
+            code = self.api_client.call_api(prompt)
+            logging.info(f"Code generated for analysis: {analysis['name']}")
+            
+            # Sanitize and prepare code
+            sanitized_code = self.sanitize_code(code)
+            parameterized_code = self.parameterize_code(sanitized_code)
+            
+            return parameterized_code
+        except Exception as e:
+            logging.error(f"Error generating code for analysis {analysis['name']}: {str(e)}")
+            logging.error(traceback.format_exc())
+            raise
+
+    def sanitize_code(self, code: str) -> str:
+        try:
+            # Handle characters that might be formatted wrongly
+            sanitized_code = code.replace('`', "'")
+            # Remove Python code block markers
+            sanitized_code = sanitized_code.replace("'''python", "").replace("'''", "")
+            
+            # Parse the code and unparse it to ensure correct indentation
+            tree = ast.parse(sanitized_code)
+            sanitized_code = ast.unparse(tree)
+            
+            # Ensure code cells end properly
+            if not sanitized_code.endswith('\n'):
+                sanitized_code += '\n'
+            return sanitized_code
+        except Exception as e:
+            logging.error(f"Error sanitizing code: {str(e)}")
+            logging.error(traceback.format_exc())
+            raise
+
+    def parameterize_code(self, code: str) -> str:
+        try:
+            parameterized_code = code.replace('data.plot(', 'plot_data(data, plot_type=plot_type, ')
+            return parameterized_code
+        except Exception as e:
+            logging.error(f"Error parameterizing code: {str(e)}")
+            logging.error(traceback.format_exc())
+            raise
 
     def generate_code_structure(self, analysis: Dict[str, Any]) -> str:
-        """
-        Generates a high-level structure for the analysis code.
-
-        Args:
-        analysis (Dict[str, Any]): The analysis step details.
-
-        Returns:
-        str: A string containing the high-level code structure.
-        """
         prompt = f"""
         Given the following analysis task:
 
@@ -95,24 +109,15 @@ class CodeGenerator:
         Return only the list of section names, one per line.
         """
 
-        structure = self.api_client.call_api(prompt)
-        return structure
+        try:
+            structure = self.api_client.call_api(prompt)
+            return structure
+        except Exception as e:
+            logging.error(f"Error generating code structure for analysis {analysis['name']}: {str(e)}")
+            logging.error(traceback.format_exc())
+            raise
 
     def refine_code(self, code: str, error_message: str = None, data_dict: Dict[str, Any] = None, analysis_plan: List[Dict[str, Any]] = None, data_dict_content: str = None, additional_requirements: str = None) -> str:
-        """
-        Refines the generated code based on error messages or additional requirements.
-
-        Args:
-        code (str): The original generated code.
-        error_message (str, optional): Any error message produced when running the code.
-        data_dict (Dict[str, Any], optional): The data dictionary describing the dataset.
-        analysis_plan (List[Dict[str, Any]], optional): The complete analysis plan.
-        data_dict_content (str, optional): The full content of the data dictionary markdown file.
-        additional_requirements (str, optional): Any additional requirements or modifications needed.
-
-        Returns:
-        str: Refined Python code.
-        """
         prompt = f"""
         Please refine the following Python code:
 
@@ -157,52 +162,61 @@ class CodeGenerator:
         {', '.join(ALLOWED_LIBRARIES)}
         """
 
-        refined_code = self.api_client.call_api(prompt)
-        return refined_code
+        try:
+            refined_code = self.api_client.call_api(prompt)
+            sanitized_code = self.sanitize_code(refined_code)
+            parameterized_code = self.parameterize_code(sanitized_code)
+            return parameterized_code
+        except Exception as e:
+            logging.error(f"Error refining code: {str(e)}")
+            logging.error(traceback.format_exc())
+            raise
 
-    def add_to_notebook(self, analysis_name: str, code: str):
+    def validate_code(self, code: str) -> bool:
         """
-        Adds a new cell to the Jupyter Notebook with the generated code.
-
-        Args:
-        analysis_name (str): The name of the analysis step.
-        code (str): The generated Python code.
+        Validate the generated code for potential security issues.
         """
-        # Add a markdown cell with the analysis name
-        self.notebook.cells.append(new_markdown_cell(f"## {analysis_name}"))
-        
-        # Add a code cell with the generated code
-        self.notebook.cells.append(new_code_cell(code))
-        
-        # Save the notebook
-        with open(self.notebook_path, 'w') as f:
-            nbformat.write(self.notebook, f)
-
-    def initialize_notebook(self):
-        """
-        Initializes the Jupyter Notebook with necessary setup code.
-        """
-        setup_code = f"""
-        import pandas as pd
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        
-        # Load the data
-        df = pd.read_csv('{config.PRODUCTION_CSV_PATH}')
-        
-        # Set up matplotlib to save figures instead of displaying them
-        plt.switch_backend('agg')
-        """
-        
-        self.notebook.cells.append(new_markdown_cell("# Automated Data Scientist Analysis"))
-        self.notebook.cells.append(new_markdown_cell("## Setup"))
-        self.notebook.cells.append(new_code_cell(setup_code))
-        
-        # Save the initialized notebook
-        with open(self.notebook_path, 'w') as f:
-            nbformat.write(self.notebook, f)
+        forbidden_functions = ['eval', 'exec', 'os.system', 'subprocess.run', '__import__']
+        for func in forbidden_functions:
+            if func in code:
+                logging.warning(f"Potential security risk: {func} found in generated code")
+                return False
+        return True
 
 if __name__ == "__main__":
-    # This block is for testing purposes and will not be executed when imported
-    pass
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        filename='code_generation.log')
+
+    # This block is for testing purposes
+    api_client = APIClient()
+    code_gen = CodeGenerator(api_client)
+    
+    # Mock analysis for testing
+    mock_analysis = {
+        "name": "Test Analysis",
+        "description": "This is a test analysis",
+        "expected_insights": "We expect to see some interesting patterns",
+        "focus": ["column1", "column2"]
+    }
+    
+    mock_data_dict = {"column1": {"type": "int"}, "column2": {"type": "str"}}
+    mock_analysis_plan = [mock_analysis]
+    mock_data_dict_content = "Column1: integer\nColumn2: string"
+    
+    try:
+        generated_code = code_gen.generate_code(mock_analysis, mock_data_dict, mock_analysis_plan, mock_data_dict_content)
+        print("Generated Code:")
+        print(generated_code)
+        
+        is_valid = code_gen.validate_code(generated_code)
+        print(f"Is code valid? {is_valid}")
+        
+        if not is_valid:
+            refined_code = code_gen.refine_code(generated_code, additional_requirements="Remove any potentially unsafe functions.")
+            print("Refined Code:")
+            print(refined_code)
+    except Exception as e:
+        logging.error(f"Error in code generation test: {str(e)}")
+        logging.error(traceback.format_exc())

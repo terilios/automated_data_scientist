@@ -1,157 +1,207 @@
 import logging
+import base64
+import gzip
+import pandas as pd
 from typing import Dict, Any, List
 from api_client import APIClient
+import json
+import traceback
+from pathlib import Path
 
 class ResultInterpreter:
     def __init__(self, api_client: APIClient):
         self.api_client = api_client
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s',
+                            handlers=[
+                                logging.FileHandler("debug.log"),
+                                logging.StreamHandler()
+                            ])
+
+    def encode_image(self, file_path: str) -> bytes:
+        try:
+            with open(file_path, "rb") as image_file:
+                encoded = base64.b64encode(image_file.read())
+                compressed = gzip.compress(encoded)
+                return compressed
+        except Exception as e:
+            logging.error(f"Error encoding image {file_path}: {str(e)}")
+            return b""
+
+    def read_data_dictionary(self) -> str:
+        try:
+            with open("data/data_dictionary.md", "r") as file:
+                return file.read()
+        except FileNotFoundError:
+            logging.error("Data dictionary file not found.")
+            return ""
+        except Exception as e:
+            logging.error(f"Error reading data dictionary: {str(e)}")
+            return ""
+
+    def read_production_data_sample(self) -> str:
+        try:
+            df = pd.read_csv("data/production_data.csv")
+            return df.head(10).to_string(index=False)
+        except FileNotFoundError:
+            logging.error("Production data file not found.")
+            return ""
+        except Exception as e:
+            logging.error(f"Error reading production data: {str(e)}")
+            return ""
 
     def interpret_results(self, analysis: Dict[str, Any], result: Any, output: str, figure_paths: List[str], completed_analyses: List[Dict], key_findings: List[str]) -> str:
-        """
-        Interprets the results of an analysis step.
-
-        Args:
-        analysis (Dict[str, Any]): The analysis step details.
-        result (Any): The result returned by the executed code.
-        output (str): The captured output of the code execution.
-        figure_paths (List[str]): List of paths to generated figures.
-        completed_analyses (List[Dict]): List of previously completed analyses.
-        key_findings (List[str]): List of key findings from previous analyses.
-
-        Returns:
-        str: A string containing the interpretation of the results.
-        """
         logging.info(f"Interpreting results for analysis: {analysis['name']}")
 
-        prompt = f"""
-        We have completed the following analysis step:
+        try:
+            data_dictionary_content = self.read_data_dictionary()
+            production_data_sample = self.read_production_data_sample()
 
-        {analysis}
+            important_figure_paths = figure_paths[:1]
+            encoded_images = [self.encode_image(path) for path in important_figure_paths] if important_figure_paths else []
 
-        The execution resulted in the following:
+            analysis_summary = analysis.get("summary", "No summary available")[:1000]
+            key_points = "; ".join(key_findings[:5])
 
-        Result: {result}
+            prompt = f"""
+            Analysis Summary (Top Points):
+            {analysis_summary}
+            
+            Key Findings Detailed (Up to 5 insights): {key_points}
 
-        Output:
-        {output}
+            Data Dictionary Overview: 
+            {data_dictionary_content}
 
-        Number of visualizations generated: {len(figure_paths)}
+            Sample Data from Production Data:
+            {production_data_sample}
 
-        Previous analyses: {len(completed_analyses)}
-        Key findings so far: {len(key_findings)}
+            Visuals: Compressed Base64
 
-        Please provide an interpretive analysis of these results. Include:
-        1. A summary of what the analysis did
-        2. Key findings and insights from the results
-        3. Interpretation of any visualizations created (without seeing them, based on their existence and the analysis description)
-        4. How these results relate to or build upon previous findings in the project
-        5. Potential implications of these results for the overall project goals
-        6. Suggestions for further analysis or investigation based on these findings
+            Provide nuanced interpretation focusing on insights and critical recommendations.
+            """
+            
+            interpretation = self.api_client.call_api(prompt)
 
-        Your interpretation should be detailed yet concise, suitable for inclusion in a data science report.
-        Format your response in Markdown, using appropriate headers and bullet points.
-        """
+            logging.info("API Response: %s", interpretation)
+            print("API Response:", interpretation)
 
-        interpretation = self.api_client.call_api(prompt)
-        logging.info(f"Results interpretation completed for analysis: {analysis['name']}")
-        return interpretation
+            if "compressed" not in interpretation.lower():
+                logging.warning("The API response did not acknowledge compressed image data.")
+
+            if "recommendations" not in interpretation.lower():
+                logging.warning("The API response may lack specific recommendations on insights.")
+
+            logging.info(f"Results interpretation completed for analysis: {analysis['name']}")
+            return interpretation
+
+        except Exception as e:
+            logging.error(f"Error interpreting results for analysis {analysis['name']}: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            return f"Error in interpretation: {str(e)}"
 
     def extract_key_findings(self, interpretation: str) -> List[str]:
-        """
-        Extracts key findings from the interpretation.
-
-        Args:
-        interpretation (str): The full interpretation of the analysis results.
-
-        Returns:
-        List[str]: A list of key findings extracted from the interpretation.
-        """
         prompt = f"""
         Given the following interpretation of an analysis:
 
         {interpretation}
 
-        Please extract and list the key findings from this interpretation. Each finding should be:
-        1. Concise (one or two sentences)
-        2. Specific and data-driven
-        3. Relevant to the overall goals of the data science project
+        Extract key findings that are concise and critical to project success. Each finding should:
+        1. Be data-driven
+        2. Align with the project's strategic goals
 
-        Provide the findings as a list, with each finding on a new line starting with a dash (-).
+        Provide the findings as a list, formatted with a dash (-) for each.
         """
-
-        findings = self.api_client.call_api(prompt)
-        key_findings = [finding.strip()[2:] for finding in findings.split('\n') if finding.strip().startswith('-')]
-        return key_findings
-
-    def suggest_next_steps(self, analysis: Dict[str, Any], interpretation: str, key_findings: List[str]) -> List[str]:
-        """
-        Suggests next steps for analysis based on the current results and interpretation.
-
-        Args:
-        analysis (Dict[str, Any]): The current analysis step details.
-        interpretation (str): The interpretation of the current analysis results.
-        key_findings (List[str]): List of key findings from all analyses so far.
-
-        Returns:
-        List[str]: A list of suggested next steps for further analysis.
-        """
-        prompt = f"""
-        Based on the following:
-
-        Current analysis: {analysis}
-
-        Interpretation of results:
-        {interpretation}
-
-        Key findings so far:
-        {key_findings}
-
-        Please suggest 3-5 next steps for further analysis. Each suggestion should:
-        1. Build upon the current findings
-        2. Address unanswered questions or explore promising directions
-        3. Be specific and actionable
-
-        Provide the suggestions as a list, with each suggestion on a new line starting with a dash (-).
-        """
-
-        suggestions = self.api_client.call_api(prompt)
-        next_steps = [step.strip()[2:] for step in suggestions.split('\n') if step.strip().startswith('-')]
-        return next_steps
+        
+        try:
+            findings = self.api_client.call_api(prompt)
+            key_findings = [finding.strip()[2:] for finding in findings.split('\n') if finding.strip().startswith('-')]
+            logging.info("Extracted key findings successfully.")
+            return key_findings
+        except Exception as e:
+            logging.error(f"Error extracting key findings: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            return []
 
     def generate_summary_report(self, completed_analyses: List[Dict], key_findings: List[str]) -> str:
-        """
-        Generates a summary report of all completed analyses.
-
-        Args:
-        completed_analyses (List[Dict]): List of all completed analyses with their results and interpretations.
-        key_findings (List[str]): List of key findings from all analyses.
-
-        Returns:
-        str: A Markdown-formatted summary report.
-        """
         prompt = f"""
-        Please generate a summary report for a data science project based on the following information:
+        Generate a comprehensive project report including the following:
 
         Completed Analyses:
-        {completed_analyses}
+        {json.dumps(completed_analyses, indent=2)}
 
         Key Findings:
-        {key_findings}
+        {json.dumps(key_findings, indent=2)}
 
-        The summary report should include:
-        1. An executive summary of the project
-        2. Overview of the analyses performed
-        3. Synthesis of key findings and insights
-        4. Implications of the findings for the project goals
-        5. Recommendations for future work or actions
-
-        Format the report in Markdown, using appropriate headers, bullet points, and emphasis where needed.
-        The report should be comprehensive yet concise, suitable for presentation to stakeholders.
+        Report must include:
+        1. Executive Summary
+        2. Detailed Analysis Results
+        3. Key Insights and Based Recommendations
+        4. Conclusions and Future Suggestions
+        
+        Format the report using Markdown with clear headings.
         """
+        
+        try:
+            report = self.api_client.call_api(prompt)
+            logging.info("Generated summary report successfully.")
+            return report
+        except Exception as e:
+            logging.error(f"Error generating summary report: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
+            return "Error generating report."
 
-        report = self.api_client.call_api(prompt)
-        return report
+    def save_report(self, report: str, output_path: Path):
+        try:
+            report_path = output_path / "final_report.md"
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(report)
+            logging.info(f"Report saved to {report_path}")
+        except Exception as e:
+            logging.error(f"Error saving report: {str(e)}")
+            logging.error(f"Traceback: {traceback.format_exc()}")
 
 if __name__ == "__main__":
-    # This block is for testing purposes and will not be executed when imported
-    pass
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(levelname)s - %(message)s',
+                        filename='interpretation.log')
+
+    # This block is for testing purposes
+    api_client = APIClient()
+    interpreter = ResultInterpreter(api_client)
+    
+    # Mock data for testing
+    mock_analysis = {
+        "name": "Test Analysis",
+        "summary": "This is a test analysis summary"
+    }
+    mock_result = "Test result"
+    mock_output = "Test output"
+    mock_figure_paths = ["test_figure1.png", "test_figure2.png"]
+    mock_completed_analyses = [mock_analysis]
+    mock_key_findings = ["Finding 1", "Finding 2"]
+
+    try:
+        # Test interpret_results
+        interpretation = interpreter.interpret_results(
+            mock_analysis, mock_result, mock_output, mock_figure_paths,
+            mock_completed_analyses, mock_key_findings
+        )
+        print("Interpretation:", interpretation)
+
+        # Test extract_key_findings
+        key_findings = interpreter.extract_key_findings(interpretation)
+        print("Key Findings:", key_findings)
+
+        # Test generate_summary_report
+        report = interpreter.generate_summary_report(mock_completed_analyses, key_findings)
+        print("Summary Report:", report)
+
+        # Test save_report
+        output_path = Path("test_output")
+        output_path.mkdir(exist_ok=True)
+        interpreter.save_report(report, output_path)
+
+    except Exception as e:
+        logging.error(f"Error in interpretation test: {str(e)}")
+        logging.error(f"Traceback: {traceback.format_exc()}")
